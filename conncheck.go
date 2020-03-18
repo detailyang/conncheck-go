@@ -63,6 +63,7 @@ func Check(c net.Conn) error {
 	ctx := acquireCtx()
 
 	if err = c.SetDeadline(time.Time{}); err != nil {
+		releaseCtx(ctx)
 		return err
 	}
 	rerr := rc.Read(ctx.Read)
