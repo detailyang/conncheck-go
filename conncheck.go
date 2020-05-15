@@ -43,7 +43,7 @@ func releaseCtx(ctx *context) {
 	ctxPool.Put(ctx)
 }
 
-func Check(c net.Conn) error {
+func Check(c net.Conn) (bool, error) {
 	var (
 		n   int
 		err error
@@ -51,20 +51,20 @@ func Check(c net.Conn) error {
 
 	sconn, ok := c.(syscall.Conn)
 	if !ok {
-		return nil
+		return false, nil
 	}
 
 	// SyscallConn allocate the raw conn on heap
 	rc, err := sconn.SyscallConn()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	ctx := acquireCtx()
 
 	if err = c.SetDeadline(time.Time{}); err != nil {
 		releaseCtx(ctx)
-		return err
+		return true, err
 	}
 	rerr := rc.Read(ctx.Read)
 
@@ -74,14 +74,14 @@ func Check(c net.Conn) error {
 
 	switch {
 	case rerr != nil:
-		return rerr
+		return true, rerr
 	case n == 0 && err == nil:
-		return io.EOF
+		return true, io.EOF
 	case n > 0:
-		return ErrUnexpectedReadOneByte
+		return true, ErrUnexpectedReadOneByte
 	case err == syscall.EAGAIN || err == syscall.EWOULDBLOCK:
-		return nil
+		return true, nil
 	default:
-		return err
+		return true, err
 	}
 }

@@ -25,7 +25,7 @@ func TestCheckClosedConnnection(t *testing.T) {
 	conn, err := net.Dial("tcp4", ln.Addr().String())
 	require.Nil(t, err)
 	time.Sleep(300 * time.Millisecond)
-	err = Check(conn)
+	_, err = Check(conn)
 	require.Equal(t, io.EOF, err)
 }
 
@@ -44,7 +44,7 @@ func TestCheckLivedConnection(t *testing.T) {
 
 	conn, err := net.Dial("tcp4", ln.Addr().String())
 	require.Nil(t, err)
-	err = Check(conn)
+	_, err = Check(conn)
 	require.Equal(t, nil, err)
 	var z [1024]byte
 	n, err := conn.Read(z[:])
